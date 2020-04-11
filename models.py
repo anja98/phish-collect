@@ -8,7 +8,7 @@ es = Elasticsearch()
 
 class Phish(object):
     ''' A class representing a possible phishing site '''
-    _index = 'samples'
+    _index = 'phish'
     _type = 'phish'
 
     def __init__(self, *args, **kwargs):
@@ -46,6 +46,7 @@ class Phish(object):
         ''' Creates a dict representation of the Phish instance that
         is compatible with Elasticsearch '''
         return {
+            'type': Phish._type,
             'pid': self.pid,
             'url': self.url,
             'index_url': self.index_url,
@@ -63,7 +64,7 @@ class Phish(object):
         ''' Indexes the document into Elasticsearch '''
         return es.index(
             index=Phish._index,
-            doc_type=Phish._type,
+            '''doc_type=Phish._type,'''
             id=self.pid,
             body=self.to_dict())
 
@@ -79,14 +80,20 @@ class Phish(object):
         exists = False
         result = es.search(
             index=cls._index,
-            doc_type=cls._type,
+            '''doc_type=cls._type,'''
             terminate_after=1,
             size=0,
             body={'query': {
                 'term': {
                     'index_url.raw': url
                 }
-            }})
+            },
+            'filter': {
+                'match': {
+                'type': cls._type 
+                }
+            }
+            })
         if result['hits']['total']:
             exists = True
         return exists
@@ -97,12 +104,17 @@ class Phish(object):
         most_recent = None
         result = es.search(
             index=cls._index,
-            doc_type=cls._type,
+            '''doc_type=cls._type,'''
             size=1,
             body={
                 "query": {
                     "term": {
                         'feed': feed
+                    }
+                },
+                'filter': {
+                    'match': {
+                    'type': cls._type 
                     }
                 },
                 "sort": [{
@@ -141,6 +153,7 @@ class PhishKit(object):
         ''' Creates a dict representation of the Phish instance that
         is compatible with Elasticsearch '''
         return {
+            'type': Phishkit._type,
             'hash': self.hash,
             'filepath': self.filepath,
             'filename': self.filename,
@@ -152,7 +165,7 @@ class PhishKit(object):
         ''' Indexes the document into Elasticsearch '''
         return es.index(
             index=PhishKit._index,
-            doc_type=PhishKit._type,
+            '''doc_type=PhishKit._type,'''
             id=self.hash,
             body=self.to_dict())
 
@@ -170,14 +183,20 @@ class PhishKit(object):
         kit = None
         result = es.search(
             index=cls._index,
-            doc_type=cls._type,
+            '''doc_type=cls._type,'''
             terminate_after=1,
             size=1,
             body={'query': {
                 'term': {
                     'url.raw': url
                 }
-            }})
+            },
+            'filter': {
+                'match': {
+                'type': cls._type 
+                }
+            }
+            })
         if result['hits']['total']:
             kit_dict = result['hits']['hits'][0]['_source']
             kit = PhishKit.from_dict(kit_dict)
