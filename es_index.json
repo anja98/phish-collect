@@ -12,8 +12,10 @@
         }
     },
     "mappings": {
-        "phish": {
             "properties": {
+                "type": {
+                    "type": "keyword"
+                },
                 "timestamp": {
                     "type": "date"
                 },
@@ -54,24 +56,13 @@
                 },
                 "kits": {
                     "type": "keyword"
-                }
-            }
-        },
-        "kit": {
-            "properties": {
+                },
+		
                 "filepath": {
                     "type": "text"
                 },
                 "filename": {
                     "type": "text"
-                },
-                "url": {
-                    "type": "text",
-                    "fields": {
-                        "raw": {
-                            "type": "keyword"
-                        }
-                    }
                 },
                 "hash": {
                     "type": "keyword"
