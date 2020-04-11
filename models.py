@@ -64,7 +64,6 @@ class Phish(object):
         ''' Indexes the document into Elasticsearch '''
         return es.index(
             index=Phish._index,
-            '''doc_type=Phish._type,'''
             id=self.pid,
             body=self.to_dict())
 
@@ -80,7 +79,6 @@ class Phish(object):
         exists = False
         result = es.search(
             index=cls._index,
-            '''doc_type=cls._type,'''
             terminate_after=1,
             size=0,
             body={'query': {
@@ -104,7 +102,6 @@ class Phish(object):
         most_recent = None
         result = es.search(
             index=cls._index,
-            '''doc_type=cls._type,'''
             size=1,
             body={
                 "query": {
@@ -165,7 +162,6 @@ class PhishKit(object):
         ''' Indexes the document into Elasticsearch '''
         return es.index(
             index=PhishKit._index,
-            '''doc_type=PhishKit._type,'''
             id=self.hash,
             body=self.to_dict())
 
@@ -183,7 +179,6 @@ class PhishKit(object):
         kit = None
         result = es.search(
             index=cls._index,
-            '''doc_type=cls._type,'''
             terminate_after=1,
             size=1,
             body={'query': {
