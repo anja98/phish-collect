@@ -2,6 +2,7 @@ import hashlib
 import logging
 import requests
 import socket
+import urllib3
 
 from datetime import datetime
 from urlparse import urlparse, urljoin
@@ -23,6 +24,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     filename='collector.log',
     encoding='utf-8')
+logging.captureWarnings(True)
 
 BLACKLIST = []
 
@@ -58,7 +60,7 @@ class Collector(object):
             kits = self.collect_kits(sample)
 
             # Index the sample and the found kits
-            sample.timestamp = datetime.now()
+            sample.timestamp = datetime.utcnow()
             for kit in kits:
                 sample.kits.append(kit.hash)
             sample.index()
@@ -66,7 +68,7 @@ class Collector(object):
             # Give a reasonable error status
             sample.status_code = 0
             sample.html = ''
-            sample.timestamp = datetime.now()
+            sample.timestamp = datetime.utcnow()
             sample.index()
 
     def lookup_ip(self, url):
