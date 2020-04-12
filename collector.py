@@ -20,7 +20,7 @@ Jordan Wright <jwright@duo.com>
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     filename='collector.log',
     encoding='utf-8')
 
@@ -71,7 +71,7 @@ class Collector(object):
 
     def lookup_ip(self, url):
         '''
-        Returns the IP address the URL resolves to. 
+        Returns the IP address the URL resolves to.
         TODO: We'll want to remove the port if it exists.
 
         Args:
@@ -231,7 +231,7 @@ class Collector(object):
 
         Args:
             url {str} - The URL to fetch
-        
+
         Returns:
             status_code {int} The status code of the HTTP response
             html {str} The HTML returned

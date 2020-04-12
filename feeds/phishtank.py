@@ -1,4 +1,5 @@
 ''' Provides programmatic access to the data provided by Phishtank '''
+import sys
 import csv
 import requests
 import logging
@@ -33,20 +34,25 @@ class PhishtankFeed(Feed):
         0	phish_id	The ID number by which Phishtank references this phishing submission.
         1	url	The phish URL as submitted to us. Because URLs can contain special characters, they are urlencoded on output.
         '''
-        reader = csv.reader(rows, delimiter='\t')
+        reader = csv.reader(rows, delimiter=',')
         entries = []
         urls_seen = []
         for record in reader:
+            logging.debug('csv record: {}'.format(record))
             pid = record[0]
             try:
                 url = urllib.unquote(record[1]).decode('utf-8')
+                submission_time = record[3]
+                verify_time = record[5]
             except:
+                logging.error('cannot extract csv record: {}\nerror: {}'.format(', '.join(record), sys.exc_info()))
                 continue
             # For now, we won't re-process already seen URLs
             if Phish.exists(url) or Phish.clean_url(url) in urls_seen:
                 continue
             urls_seen.append(Phish.clean_url(url))
-            entries.append(Phish(pid=pid, url=url, feed=self.feed))
+            entries.append(Phish(pid=pid, url=url, feed=self.feed, submission_time=submission_time, verify_time=verify_time))
+        logging.info('processed {} CSV entries'.format(len(entries)))
         return entries
 
     def get(self, offset=0):
@@ -76,33 +82,26 @@ class PhishtankFeed(Feed):
             timeout=5,
             params=params,
             auth=(self.username, self.password))
+        logging.debug('Status: {}\nResponse Headers: {}'.format(response.status_code, response.headers))
         if not response.ok:
-            raise FetchException(
-                'Error fetching response:\nStatus: {}\nResponse:{}'.format(
-                    response.status_code, response.text.encode("utf-8")))
+            if response.status_code == 404:
+                response_txt = ''
+            else:
+                response_txt = response.text.encode("utf-8")
+            raise FetchException (
+                logging.error(
+                    'Error fetching response:\nStatus: {}\nResponse:{}\nResponse Headers:{}'.format(
+                        response.status_code, response_txt, response.headers)))
 
-        # The first row is the maximum phish id in our database.
-        # The second row is the minimum phish id in our database
-        # which is known to be online and functional. You can mark any id in your
-        # database lower than this as offline without further checking
-        # against our system.
-        entries = response.text.splitlines()
-        if not entries or len(entries) < 2:
+        # The first row is the csv header 
+        entries = response.text.encode("utf-8").splitlines()
+        if not entries or len(entries) < 1:
             raise FetchException(
                 'Error fetching response: Invalid response received: {}'.
                 format(entries))
         # If there are no new entries, just return an empty list
-        if len(entries) == 2:
+        if len(entries) == 1:
             return results
-        max_id = entries[0]
-        results = self._process_rows(entries[2:])
-        if not results:
-            return results
-        self.last_seen = results[-1].pid
-        if max_id != self.last_seen:
-            # Recursively get the next set of results
-            logging.info(
-                'Getting next set of results. Max ID: {} Current ID: {}'.
-                format(max_id, self.last_seen))
-            results.extend(self.get(offset=self.last_seen))
+        max_id = entries[1].split(',')[0]
+        results = self._process_rows(entries[1:])
         return results

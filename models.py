@@ -2,9 +2,15 @@
 from datetime import datetime
 from elasticsearch import Elasticsearch
 from urlparse import urlparse
+from config import config
+import logging
 
-es = Elasticsearch()
 
+es_host = config['elasticsearch']['host']
+es_port = config['elasticsearch']['port']
+es_user = config['elasticsearch']['user']
+es_pass = config['elasticsearch']['pass']
+es = Elasticsearch(['http://{}:{}@{}:{}/'.format(es_user, es_pass, es_host, es_port)])
 
 class Phish(object):
     ''' A class representing a possible phishing site '''
@@ -22,6 +28,8 @@ class Phish(object):
         self.kits = kwargs.get('kits', [])
         self.timestamp = datetime.now()
         self.status_code = kwargs.get('status_code')
+        self.submission_time = kwargs.get('submission_time')
+        self.verify_time = kwargs.get('verify_time')
         self.html = kwargs.get('html')
 
     @classmethod
@@ -57,6 +65,8 @@ class Phish(object):
             'kits': self.kits,
             'timestamp': self.timestamp,
             'status_code': self.status_code,
+            'submission_time': self.submission_time,
+            'verify_time': self.verify_time,
             'html': self.html
         }
 
@@ -82,18 +92,22 @@ class Phish(object):
             terminate_after=1,
             size=0,
             body={'query': {
-                'term': {
-                    'index_url.raw': url
+                "bool": {
+                    'must': {
+                        'term': {
+                            'index_url.raw': url
+                        }
+                    },
+                    'filter': {
+                        'match': {
+                            'type': cls._type
+                        }
+                    }
                 }
-            },
-            'filter': {
-                'match': {
-                'type': cls._type 
-                }
-            }
-            })
-        if result['hits']['total']:
+            }})
+        if result['hits']['hits']:
             exists = True
+        logging.debug('url {} exists ? {}'.format(url, exists))
         return exists
 
     @classmethod
@@ -105,20 +119,20 @@ class Phish(object):
             size=1,
             body={
                 "query": {
-                    "term": {
-                        'feed': feed
+                    "bool": {
+                        "must": {
+                            "term": {
+                                "feed": feed
+                            }
+                        },
+                        "filter": {
+                            "match": {
+                                "type": cls._type
+                            }
+                        }
                     }
                 },
-                'filter': {
-                    'match': {
-                    'type': cls._type 
-                    }
-                },
-                "sort": [{
-                    "timestamp": {
-                        "order": "desc"
-                    }
-                }]
+                "sort": [{ "timestamp": {"order": "desc"} }],
             })
         hits = result['hits']['hits']
         if hits:
@@ -182,16 +196,19 @@ class PhishKit(object):
             terminate_after=1,
             size=1,
             body={'query': {
-                'term': {
-                    'url.raw': url
+                "bool": {
+                    'must': {
+                        'term': {
+                            'url.raw': url
+                        }
+                    },
+                    'filter': {
+                        'match': {
+                            'type': cls._type
+                        }
+                    }
                 }
-            },
-            'filter': {
-                'match': {
-                'type': cls._type 
-                }
-            }
-            })
+            }})
         if result['hits']['total']:
             kit_dict = result['hits']['hits'][0]['_source']
             kit = PhishKit.from_dict(kit_dict)

@@ -1,7 +1,7 @@
 [phishtank]
 username = ''
 password = ''
-url = ''
+url = '''
 last_seen = ''
 
 [openphish]
@@ -14,3 +14,9 @@ max_links_per_directory = 100
 [server]
 host = '0.0.0.0'
 port = 8888
+
+[elasticsearch]
+host = 'locahost'
+port = '9200'
+user = ''
+pass = ''
