@@ -3,6 +3,7 @@ import logging
 import requests
 import socket
 import urllib3
+import codecs
 
 from datetime import datetime
 from urlparse import urlparse, urljoin
@@ -21,7 +22,7 @@ Jordan Wright <jwright@duo.com>
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     filename='collector.log',
     encoding='utf-8')
 logging.captureWarnings(True)
@@ -52,17 +53,20 @@ class Collector(object):
             if 'hxx' in parts.scheme:
                 sample.url = sample.url.replace('hxxp', 'http', 1)
 
-            status_code, html = self.collect_html(sample.url)
-            sample.html = html
-            sample.status_code = status_code
+            # don't need to collect the HTML for now
+            #status_code, html = self.collect_html(sample.url)
+            #sample.html = html
+            #sample.status_code = status_code
+            sample.html = ''
             sample.ip_address = self.lookup_ip(sample.url)
 
-            kits = self.collect_kits(sample)
+            # don't need to collect kits for now    
+            #kits = self.collect_kits(sample)
+            #for kit in kits:
+            #    sample.kits.append(kit.hash)
 
             # Index the sample and the found kits
             sample.timestamp = datetime.utcnow()
-            for kit in kits:
-                sample.kits.append(kit.hash)
             sample.index()
         except Exception as e:
             # Give a reasonable error status
@@ -259,6 +263,13 @@ def process_sample(sample):
         logging.info('Error processing sample: {}: {}'.format(
             sample.url.encode('utf-8'), e))
 
+def dump_url(samples):
+    with codecs.open(config['collector']['url_file_dump'],"w", 'utf-8-sig') as url_file:
+        for sample in samples:
+            url = sample.index_url
+            url = url.replace('http://', '', 1)
+            url = url.replace('https://', '', 1)
+            url_file.write(unicode(url + '\r\n','utf-8'))
 
 def main():
     logging.info('---------------------------------------')
@@ -281,6 +292,9 @@ def main():
         if results:
             logging.info("Found {} {} samples with final pid: {}".format(
                 len(samples), feed.feed, results[-1].pid))
+
+            # Dump a set of phishing url
+            dump_url(samples)
         else:
             logging.info("No samples found for {}".format(feed.feed))
 

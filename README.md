@@ -68,7 +68,7 @@ cd phish_collect
 To index values in Elasticsearch, we have to create our indexes. We can do that with this command:
 
 ```
-curl -XPUT localhost:9200/samples -H "Content-Type: application/json" -d @es_index.json
+curl -XPUT localhost:9200/phish -H "Content-Type: application/json" -d @es_index.json
 ```
 
 ### Install Python Requirements
