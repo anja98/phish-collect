@@ -26,7 +26,7 @@ class Phish(object):
         self.indexing_enabled = kwargs.get('indexing_enabled', False)
         self.has_kit = kwargs.get('has_kit', False)
         self.kits = kwargs.get('kits', [])
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.utcnow()
         self.status_code = kwargs.get('status_code')
         self.submission_time = kwargs.get('submission_time')
         self.verify_time = kwargs.get('verify_time')
