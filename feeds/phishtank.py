@@ -79,9 +79,9 @@ class PhishtankFeed(Feed):
         if not response.ok:
             raise FetchException(
                 'Error fetching response:\nStatus: {}\nResponse:{}'.format(
-                    response.status_code, response.text))
+                    response.status_code, response.text.encode("utf-8")))
 
-        # The first row is the maximum phish id in our database. 
+        # The first row is the maximum phish id in our database.
         # The second row is the minimum phish id in our database
         # which is known to be online and functional. You can mark any id in your
         # database lower than this as offline without further checking
