@@ -16,7 +16,7 @@ host = '0.0.0.0'
 port = 8888
 
 [elasticsearch]
-host = 'locahost'
+host = 'localhost'
 port = '9200'
 user = ''
 pass = ''
